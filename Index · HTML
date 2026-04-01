@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asma AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">✿</div>
+      <div class="logo-name">
+        <span class="logo-title">Asma AI</span>
+        <span class="logo-tagline">Intelligent Assistant</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="online-badge">
+        <div class="online-dot"></div>
+        <span>آن لائن</span>
+      </div>
+      <button class="new-chat-btn" onclick="newChat()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        نئی گفتگو
+      </button>
+    </div>
+  </header>
+
+  <!-- ── CHAT AREA ── -->
+  <div id="chat">
+    <div id="welcome">
+      <div class="welcome-avatar">✿</div>
+      <h1 class="welcome-title">السلام علیکم! میں Asma AI ہوں</h1>
+      <p class="welcome-subtitle">آپ کا ذہین اور دوستانہ AI ساتھی۔ کوئی بھی سوال پوچھیں — اردو یا انگریزی میں۔</p>
+      <div class="divider">آج کیا جاننا چاہتے ہیں؟</div>
+      <div class="suggestions">
+        <button class="sug" onclick="pickSug(this)">
+          <span class="sug-icon">🌸</span>
+          <div class="sug-text">اسلامی دعا لکھیں</div>
+          <div class="sug-desc">روزانہ کی خوبصورت دعا</div>
+        </button>
+        <button class="sug" onclick="pickSug(this)">
+          <span class="sug-icon">💻</span>
+          <div class="sug-text">Python کوڈ لکھیں</div>
+          <div class="sug-desc">فائبوناچی سیریز بنائیں</div>
+        </button>
+        <button class="sug" onclick="pickSug(this)">
+          <span class="sug-icon">📚</span>
+          <div class="sug-text">پاکستان کی تاریخ</div>
+          <div class="sug-desc">آسان الفاظ میں بتائیں</div>
+        </button>
+        <button class="sug" onclick="pickSug(this)">
+          <span class="sug-icon">🤖</span>
+          <div class="sug-text">مصنوعی ذہانت کیا ہے؟</div>
+          <div class="sug-desc">سادہ انداز میں سمجھائیں</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INPUT AREA ── -->
+  <div id="input-area">
+    <div class="input-shell">
+      <textarea id="userinput" rows="1" placeholder="Asma AI سے کچھ بھی پوچھیں…" autocomplete="off"></textarea>
+      <button id="sendbtn" onclick="send()" title="بھیجیں">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-footer">
+      Asma AI غلطیاں کر سکتی ہے <span></span> اہم معلومات ضرور جانچیں
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>ndex · HTML
