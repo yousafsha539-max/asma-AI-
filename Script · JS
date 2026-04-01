@@ -1,0 +1,217 @@
+const SYSTEM = `آپ Asma AI ہیں — ایک خوبصورت، ذہین، مددگار، اور دوستانہ AI اسسٹنٹ جو خاص طور پر اردو بولنے والوں کے لیے بنائی گئی ہے۔
+آپ کا انداز گرم جوشانہ، احترام والا، اور سمجھدارانہ ہے۔
+جب کوئی اردو میں بات کرے تو اردو میں جواب دیں، انگریزی میں بات کرے تو انگریزی میں جواب دیں۔
+جوابات واضح، مددگار، اور مکمل ہونے چاہئیں۔
+جہاں مناسب ہو وہاں مثالیں، نکات، اور وضاحتیں دیں۔
+آپ کا نام صرف "Asma AI" ہے — کوئی اور نام نہیں۔`;
+
+// ✅ Netlify proxy — API key محفوظ رہتی ہے
+const API_URL = "/.netlify/functions/chat";
+
+let history = [];
+let busy = false;
+
+const chatEl = document.getElementById('chat');
+const inp = document.getElementById('userinput');
+const btn = document.getElementById('sendbtn');
+
+// ── Auto-resize textarea ──
+inp.addEventListener('input', () => {
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 150) + 'px';
+});
+
+// ── Enter key to send ──
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+// ── Suggestion card click ──
+function pickSug(el) {
+  const t = el.querySelector('.sug-text').textContent.trim();
+  inp.value = t;
+  inp.dispatchEvent(new Event('input'));
+  send();
+}
+
+// ── New chat / reset ──
+function newChat() {
+  history = [];
+  chatEl.innerHTML = '';
+  chatEl.appendChild(buildWelcome());
+}
+
+// ── Build welcome screen ──
+function buildWelcome() {
+  const w = document.createElement('div');
+  w.id = 'welcome';
+  w.innerHTML = `
+    <div class="welcome-avatar">✿</div>
+    <h1 class="welcome-title">السلام علیکم! میں Asma AI ہوں</h1>
+    <p class="welcome-subtitle">آپ کا ذہین اور دوستانہ AI ساتھی۔ کوئی بھی سوال پوچھیں — اردو یا انگریزی میں۔</p>
+    <div class="divider">آج کیا جاننا چاہتے ہیں؟</div>
+    <div class="suggestions">
+      <button class="sug" onclick="pickSug(this)">
+        <span class="sug-icon">🌸</span>
+        <div class="sug-text">اسلامی دعا لکھیں</div>
+        <div class="sug-desc">روزانہ کی خوبصورت دعا</div>
+      </button>
+      <button class="sug" onclick="pickSug(this)">
+        <span class="sug-icon">💻</span>
+        <div class="sug-text">Python کوڈ لکھیں</div>
+        <div class="sug-desc">فائبوناچی سیریز بنائیں</div>
+      </button>
+      <button class="sug" onclick="pickSug(this)">
+        <span class="sug-icon">📚</span>
+        <div class="sug-text">پاکستان کی تاریخ</div>
+        <div class="sug-desc">آسان الفاظ میں بتائیں</div>
+      </button>
+      <button class="sug" onclick="pickSug(this)">
+        <span class="sug-icon">🤖</span>
+        <div class="sug-text">مصنوعی ذہانت کیا ہے؟</div>
+        <div class="sug-desc">سادہ انداز میں سمجھائیں</div>
+      </button>
+    </div>`;
+  return w;
+}
+
+// ── Remove welcome screen ──
+function removeWelcome() {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+}
+
+// ── Scroll chat to bottom ──
+function scrollDown() {
+  setTimeout(() => chatEl.scrollTop = chatEl.scrollHeight, 60);
+}
+
+// ── Add a message bubble ──
+function addMsg(role, text, err = false) {
+  removeWelcome();
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+
+  const av = document.createElement('div');
+  av.className = `av ${role}`;
+  av.textContent = role === 'ai' ? '✿' : '👤';
+
+  const bub = document.createElement('div');
+  bub.className = 'bubble' + (err ? ' error-bubble' : '');
+  bub.innerHTML = role === 'ai' ? fmt(text) : esc(text);
+
+  row.appendChild(av);
+  row.appendChild(bub);
+  chatEl.appendChild(row);
+  scrollDown();
+  return bub;
+}
+
+// ── Show typing indicator ──
+function addTyping() {
+  removeWelcome();
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.id = 'typing';
+
+  const av = document.createElement('div');
+  av.className = 'av ai';
+  av.textContent = '✿';
+
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+  row.appendChild(av);
+  row.appendChild(bub);
+  chatEl.appendChild(row);
+  scrollDown();
+}
+
+// ── Remove typing indicator ──
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+// ── Escape HTML ──
+function esc(t) {
+  return t
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ── Format markdown-like text to HTML ──
+function fmt(t) {
+  // Code blocks
+  t = t.replace(/```(\w*)?\n([\s\S]*?)```/g, (_, l, c) =>
+    `<pre><code>${esc(c.trim())}</code></pre>`
+  );
+  // Inline code
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Unordered list
+  t = t.replace(/^[-•]\s+(.+)/gm, '<li>$1</li>');
+  t = t.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+  // Ordered list
+  t = t.replace(/^\d+\.\s+(.+)/gm, '<li>$1</li>');
+  // Paragraphs
+  t = t.split(/\n{2,}/).map(p => {
+    p = p.trim();
+    if (!p) return '';
+    if (p.startsWith('<pre>') || p.startsWith('<ul>') || p.startsWith('<ol>')) return p;
+    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+  return t;
+}
+
+// ── Send message to API ──
+async function send() {
+  const msg = inp.value.trim();
+  if (!msg || busy) return;
+
+  busy = true;
+  btn.disabled = true;
+  inp.value = '';
+  inp.style.height = 'auto';
+
+  addMsg('user', msg);
+  history.push({ role: 'user', content: msg });
+  addTyping();
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: SYSTEM,
+        messages: history
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API خرابی');
+
+    const reply = data.content?.find(c => c.type === 'text')?.text
+      || 'معذرت، جواب نہیں مل سکا۔';
+
+    removeTyping();
+    addMsg('ai', reply);
+    history.push({ role: 'assistant', content: reply });
+
+  } catch (e) {
+    removeTyping();
+    addMsg('ai', `⚠️ خرابی: ${e.message}`, true);
+  } finally {
+    busy = false;
+    btn.disabled = false;
+    inp.focus();
+  }
+}
